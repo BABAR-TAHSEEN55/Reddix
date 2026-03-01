@@ -10,8 +10,8 @@ export default defineConfig({
   manifest: ({ browser, manifestVersion, mode, command }) => {
     return {
       manifest_version: 2,
-      name: "<Your extension name>>",
-      description: "<Your extension description>",
+      name: "Reddix",
+      description: "A reddit extension that solved the nightmare of subreddtis",
       version: "1.0.0",
       //Good to have extension permissions
       permissions: [
