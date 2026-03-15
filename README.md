@@ -480,7 +480,7 @@ const filtered = indices.map((i) => posts[i]);
 
 ## License
 
-MIT — see `LICENSE`.
+MIT — see [[LICENSE]].
 
 ---
 
