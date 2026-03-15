@@ -4,9 +4,10 @@ import "../initial.css";
 
 import Posts from "./posts/Posts";
 import { CreateContentUI } from "./common";
-import { extractRedditPosts } from "../scripts/scrape";
+import { extractRedditComments, extractRedditPosts } from "../scripts/scrape";
 
 import { trpc } from "@/lib/trpc/trpcClient";
+import Comments from "./comments/Comments";
 
 type InsightType = "posts" | "comments";
 
@@ -79,6 +80,7 @@ function createUI(ctx: any, type: InsightType) {
 				};
 
 				const posts = extractRedditPosts();
+				const comments = extractRedditComments();
 
 				if (type === "posts") {
 					return <Posts onRemove={onRemove} posts={posts} />;
@@ -86,8 +88,8 @@ function createUI(ctx: any, type: InsightType) {
 
 				if (type === "comments") {
 					console.log("Comments insight clicked");
-					// future component
-					// return <Comments onRemove={onRemove} comments={comments} />
+
+					return <Comments onRemove={onRemove} comments={comments} />;
 				}
 
 				return null;
