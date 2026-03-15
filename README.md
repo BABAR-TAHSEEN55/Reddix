@@ -1,191 +1,489 @@
-# Xtension
+# Reddix - AI-Powered Reddit Insights Extension
 
-A modern browser extension template built with WXT framework, React 19, and TypeScript. This extension provides a robust foundation for cross-browser development with modern tooling and best practices.
+<p align="center">
+  <img src="./public/reddix-256.png" alt="Reddix icon" width="140" height="140" />
+</p>
 
-## Tech Stack
+[![TypeScript](https://img.shields.io/badge/typescript-5.x-blue.svg)](https://www.typescriptlang.org/)
+[![React](https://img.shields.io/badge/react-19-61dafb?logo=react)](https://react.dev/)
+[![WXT](https://img.shields.io/badge/WXT-0.20-purple)](https://wxt.dev/)
+[![Groq](https://img.shields.io/badge/Groq-LLM-orange)](https://groq.com/)
 
-- **WXT Framework** - Modern web extension framework
-- **React 19** - Latest React with concurrent features
-- **TypeScript** - Type-safe JavaScript development
-- **Tailwind CSS 4** - Utility-first CSS framework
-- **shadcn/ui** - Re-usable UI components built with Radix UI
-- **pnpm** - Fast, disk space efficient package manager
-- **Lucide React** - Beautiful & consistent icon library
+> A browser extension that turns chaotic Reddit browsing into a focused insights workflow — with AI-powered filtering, local search, and a chat interface, all inside a polished shadow-root overlay.
 
-## Features
+---
 
-- Cross-browser compatibility (Chrome, Firefox, Safari, Edge)
-- Modern React 19 with TypeScript
-- Tailwind CSS for styling
-- shadcn/ui component library
-- Background scripts and content scripts
-- Popup interface
-- Hot module replacement for development
-- Built-in permissions management
+## Table of Contents
 
-## Prerequisites
+- [Overview](#overview)
+- [System Architecture](#system-architecture)
+- [Key Features](#key-features)
+- [Pipeline Flow](#pipeline-flow)
+- [AI Capabilities](#ai-capabilities)
+- [Installation & Development](#installation--development)
+- [Configuration](#configuration)
+- [Usage](#usage)
+- [Project Structure](#project-structure)
+- [Tech Stack](#tech-stack)
+- [Roadmap](#roadmap)
+- [Security Notes](#security-notes)
+- [License](#license)
 
-- Node.js 16+ or 18+ recommended
-- pnpm (recommended) or npm
+---
 
-## Setup Instructions
+## Overview
 
-1. **Clone the repository**
+**Reddix** is a Chrome extension that injects an intelligent overlay into Reddit pages, letting you extract, search, filter, and chat with posts and comments — without ever leaving the page.
 
-    ```bash
-    git clone <repository-url>
-    cd Xtension
-    ```
+### What Makes It Special?
 
-2. **Install dependencies**
+- **Shadow-Root Overlay**: Non-intrusive, scoped UI injected directly into the Reddit page
+- **tRPC over Chrome Messaging**: Type-safe RPC between content scripts and background worker
+- **AI Filtering**: Groq-powered relevance ranking — surface only what matters
+- **AI Chat Interface**: Ask questions about posts/comments and get structured Markdown responses
+- **Dual Insight Modes**: Separate workflows for posts and comments, both accessible via context menu
+- **Local Search**: Instant client-side search with no round-trips
 
-    ```bash
-    pnpm install
-    ```
+---
 
-    Or with npm:
+## System Architecture
 
-    ```bash
-    npm install
-    ```
+```mermaid
+graph TB
+    subgraph "Entry Points"
+        A[Context Menu] -->|POST_INSIGHTS_CLICKED| B[Content Script]
+        A -->|COMMENT_INSIGHTS_CLICKED| B
+    end
 
-3. **Configure the extension**
+    subgraph "Content Script Layer"
+        B --> C[Shadow Root UI]
+        C --> D[DOM Extractor\nscrape.ts]
+        D -->|posts| E[Posts Overlay]
+        D -->|comments| F[Comments Overlay]
+        E --> G[LLMInterface\nChat UI]
+    end
 
-    Edit `wxt.config.ts` to customize your extension:
+    subgraph "Extension Background"
+        H[tRPC Router\nappRouter]
+        H --> I[AIService.ts]
+        I --> J[Groq API]
+    end
 
-    ```typescript
-    manifest: {
-      name: "Your Extension Name",
-      description: "Your extension description",
-      version: "1.0.0"
-    }
-    ```
+    subgraph "Transport Layer"
+        E -->|chromeLink port| H
+        F -->|chromeLink port| H
+        G -->|chromeLink port| H
+    end
 
-## Development
+    style A fill:#ff6b6b
+    style B fill:#4ecdc4
+    style H fill:#f9ca24
+    style I fill:#6c5ce7
+    style J fill:#00b894
+    style C fill:#45b7d1
+```
 
-### Start development server
+---
+
+## Key Features
+
+### Shadow-Root Overlay
+
+- **Scoped Styles**: Completely isolated from Reddit's CSS via shadow DOM
+- **Toggle Behavior**: Right-click → action mounts/unmounts the overlay in-place
+- **No Page Reload**: Overlay attaches and detaches without disturbing the page
+
+### DOM Extraction
+
+- **Post Extraction**: Scrapes `shreddit-post` elements — title, subreddit, author, score
+- **Comment Extraction**: Scrapes `shreddit-comment` elements — body, author, flair, subreddit
+- **Resilient Selectors**: Handles Reddit's custom element architecture
+
+### Local Search
+
+- **Instant Filtering**: Client-side search with no latency
+- **Multi-field**: Searches across title, subreddit, author (posts) and body, flair (comments)
+- **Zero Network**: Runs entirely in the content script
+
+### AI-Powered Filtering
+
+- **Relevance Ranking**: Send a natural-language query; the model returns only matching items
+- **JSON Index Mapping**: Model outputs indices, which are mapped back to original DOM data
+- **Inline UX**: Activates via bot icon in the overlay — no new tabs or popups
+
+### AI Chat Interface
+
+- **Contextual Q&A**: Ask questions about the currently visible posts
+- **Markdown Responses**: Structured output with bullet points and line-by-line formatting
+- **Background Execution**: LLM calls happen in the background script — content scripts never touch the API directly
+
+---
+
+## Pipeline Flow
+
+```mermaid
+sequenceDiagram
+    participant U as User
+    participant CM as Context Menu
+    participant CS as Content Script
+    participant DOM as Reddit DOM
+    participant UI as Overlay UI
+    participant BG as Background tRPC
+    participant AI as Groq API
+
+    U->>CM: Right-click → Post Insights
+    CM->>CS: POST_INSIGHTS_CLICKED message
+    CS->>DOM: extractRedditPosts()
+    DOM-->>CS: posts[]
+    CS->>UI: Mount shadow-root overlay
+    UI-->>U: Posts rendered
+
+    U->>UI: Enter AI filter query
+    UI->>BG: analyzePosts(posts, query) via tRPC
+    BG->>AI: Groq chat completion
+    AI-->>BG: JSON indices of relevant posts
+    BG-->>UI: filtered posts[]
+    UI-->>U: Narrowed list shown
+
+    U->>UI: Open chat panel
+    UI->>BG: chatAboutPosts(posts, message) via tRPC
+    BG->>AI: Groq chat completion
+    AI-->>BG: Markdown response
+    BG-->>UI: Streamed text
+    UI-->>U: Chat reply rendered
+```
+
+---
+
+## AI Capabilities
+
+Reddix supports two distinct AI interaction modes:
+
+```mermaid
+flowchart LR
+    subgraph Input["User Input"]
+        Q1[Filter Query]
+        Q2[Chat Message]
+    end
+
+    subgraph Procedures["tRPC Procedures"]
+        P1[analyzePosts]
+        P2[analyzeComments]
+        P3[chatAboutPosts]
+        P4[chatAboutComments]
+    end
+
+    subgraph Output["Output Type"]
+        O1[Filtered Item Subset]
+        O2[Markdown Analysis]
+    end
+
+    Q1 --> P1 & P2 --> O1
+    Q2 --> P3 & P4 --> O2
+
+    style Input fill:#e1f5dd
+    style Procedures fill:#fff4e6
+    style Output fill:#f3e5f5
+```
+
+### Mode 1 — AI Filtering
+
+| Property   | Detail                                                       |
+| ---------- | ------------------------------------------------------------ |
+| Procedures | `analyzePosts`, `analyzeComments`                            |
+| Input      | Full posts/comments array + user query                       |
+| Output     | JSON array of relevant indices                               |
+| Behavior   | Indices mapped back to original items; list narrows in-place |
+
+### Mode 2 — AI Chat
+
+| Property   | Detail                                          |
+| ---------- | ----------------------------------------------- |
+| Procedures | `chatAboutPosts`, `chatAboutComments`           |
+| Input      | Posts/comments context + conversational message |
+| Output     | Markdown-formatted natural language             |
+| Behavior   | Rendered line-by-line in the chat panel         |
+
+> Prompts enforce strict output formatting so responses are always readable inside the overlay UI.
+
+---
+
+## Installation & Development
+
+### Prerequisites
+
+- Node.js (current LTS recommended)
+- pnpm
+
+### Setup
 
 ```bash
-# For Chrome/Chromium
+# Clone the repository
+git clone <your-repo-url>
+cd Reddix
+
+# Install dependencies
+pnpm install
+```
+
+### Development
+
+```bash
+# Chrome (default)
 pnpm dev
 
-# For Firefox
+# Firefox
 pnpm dev:firefox
 ```
 
-### Load extension in browser
+WXT will open the browser with the extension hot-reloaded on changes.
 
-**Chrome/Edge:**
-
-1. Open `chrome://extensions/`
-2. Enable "Developer mode"
-3. Click "Load unpacked"
-4. Select the `.output/chrome-mv3` directory
-
-**Firefox:**
-
-1. Open `about:debugging`
-2. Click "This Firefox"
-3. Click "Load Temporary Add-on"
-4. Select the `manifest.json` from `.output/firefox-mv2` directory
-
-## Build for Production
+### Build & Package
 
 ```bash
-# Build for Chrome/Chromium
+# Production build
 pnpm build
 
-# Build for Firefox
-pnpm build:firefox
-
-# Create distribution zip
+# Create distributable ZIP
 pnpm zip
+
+# Firefox build + ZIP
+pnpm build:firefox
 pnpm zip:firefox
 ```
+
+---
+
+## Configuration
+
+### Extension Manifest
+
+Configured in `wxt.config.ts` — adjust match patterns, permissions, and output paths here.
+
+### Groq API Key
+
+LLM calls are made in `src/lib/AIService.ts` using Groq's chat completions endpoint.
+
+> **You will need a Groq API key.**
+> Never hardcode or commit keys to the repository.
+
+| Environment | Recommended Approach                     |
+| ----------- | ---------------------------------------- |
+| Local dev   | `.env` file with `GROQ_API_KEY=...`      |
+| Production  | Extension settings UI + `chrome.storage` |
+
+---
+
+## Usage
+
+### Context Menu Actions
+
+After loading the extension in your browser:
+
+- Right-click anywhere on a Reddit page → **Post Insights**
+- Right-click anywhere on a Reddit page → **Comment Insights**
+
+Each action toggles the overlay — triggering again unmounts it cleanly.
+
+### Overlay Workflow
+
+```
+Open overlay
+    │
+    ├── Local search bar → instant filtering
+    │
+    ├── Bot icon → AI filter panel
+    │       └── Enter query → list narrows to relevant items
+    │
+    └── Chat icon → AI chat panel
+            └── Ask anything → Markdown response rendered inline
+```
+
+### Example Interaction
+
+```
+[User opens Post Insights on r/programming]
+
+Overlay shows 34 posts
+
+[User types in AI filter]: "posts about Rust performance"
+→ Overlay narrows to 6 relevant posts
+
+[User opens chat panel]: "Summarize the top concerns people have"
+→ AI responds with a structured Markdown breakdown
+```
+
+---
 
 ## Project Structure
 
 ```
-src/
-├── entrypoints/          # Extension entry points
-│   ├── background/       # Background scripts
-│   ├── content/          # Content scripts
-│   ├── popup/           # Extension popup
-│   └── *.css            # Global styles
-├── components/          # React components
-│   └── ui/             # shadcn/ui components
-├── hooks/              # Custom React hooks
-├── lib/                # Utility functions
-└── assets/             # Static assets
+Reddix/
+├── src/
+│   ├── entrypoints/
+│   │   ├── background/
+│   │   │   └── index.ts                 # tRPC server + context menu setup
+│   │   ├── content/
+│   │   │   ├── index.tsx                # Message listener + overlay mounting
+│   │   │   ├── posts/
+│   │   │   │   └── Posts.tsx            # Posts overlay UI + AI filtering
+│   │   │   ├── comments/
+│   │   │   │   └── Comments.tsx         # Comments overlay UI + AI filtering
+│   │   │   └── common/
+│   │   │       └── LLMInterface.tsx     # AI chat panel component
+│   │   ├── popup/
+│   │   │   └── App.tsx                  # Extension popup (placeholder)
+│   │   └── scripts/
+│   │       └── scrape.ts                # DOM extractors for posts + comments
+│   ├── lib/
+│   │   ├── trpc/
+│   │   │   ├── init.ts                  # tRPC initialization + context
+│   │   │   ├── router.ts                # appRouter — all procedures
+│   │   │   └── trpcClient.ts            # Singleton content-script client
+│   │   ├── AIService.ts                 # Groq LLM calls + filtering logic
+│   │   ├── schemas.ts                   # Zod schemas for all payloads
+│   │   └── prompt.ts                    # Prompt templates + helpers
+│   └── components/ui/                   # shadcn/ui + Radix primitives
+├── wxt.config.ts
+├── package.json
+└── README.md
 ```
 
-## Scripts
+### Component Relationships
 
-- `pnpm dev` - Start development server (Chrome)
-- `pnpm dev:firefox` - Start development server (Firefox)
-- `pnpm build` - Build for production (Chrome)
-- `pnpm build:firefox` - Build for production (Firefox)
-- `pnpm zip` - Create distribution zip (Chrome)
-- `pnpm zip:firefox` - Create distribution zip (Firefox)
-- `pnpm compile` - Type check without emitting
+```mermaid
+graph LR
+    subgraph Entrypoints
+        A[background/index.ts]
+        B[content/index.tsx]
+    end
 
-## Extension Permissions
+    subgraph UI
+        C[Posts.tsx]
+        D[Comments.tsx]
+        E[LLMInterface.tsx]
+    end
 
-The extension includes the following permissions:
+    subgraph Library
+        F[router.ts]
+        G[AIService.ts]
+        H[trpcClient.ts]
+        I[scrape.ts]
+        J[schemas.ts]
+    end
 
-- `storage` - Local/sync storage access
-- `scripting` - Script injection capabilities
-- `tabs` - Tab information access
-- `contextMenus` - Context menu integration
-- `activeTab` - Active tab access
+    A --> F
+    B --> C & D
+    C --> E
+    C --> H
+    D --> H
+    H --> F
+    F --> G
+    B --> I
+    G --> J
 
-## Customization
-
-### Adding Components
-
-This project uses shadcn/ui. To add new components:
-
-```bash
-npx shadcn@latest add button
-npx shadcn@latest add card
+    style A fill:#ff6b6b,color:#fff
+    style B fill:#4ecdc4,color:#fff
+    style F fill:#f9ca24
+    style G fill:#6c5ce7,color:#fff
+    style H fill:#45b7d1,color:#fff
 ```
 
-### Styling
+---
 
-Tailwind CSS is configured with custom design tokens. Global styles are in `src/entrypoints/global.css`.
+## Tech Stack
 
-### Adding New Entry Points
+| Technology            | Role                                               |
+| --------------------- | -------------------------------------------------- |
+| **WXT**               | Extension framework — dev server, build, manifest  |
+| **React 19**          | UI rendering inside shadow-root overlays           |
+| **TypeScript**        | End-to-end type safety                             |
+| **Tailwind CSS**      | Utility-first styling                              |
+| **shadcn/ui + Radix** | Accessible UI primitives                           |
+| **tRPC v10**          | Typed procedures across extension boundary         |
+| **trpc-chrome**       | Chrome runtime messaging transport for tRPC        |
+| **SuperJSON**         | Rich serialization over Chrome port                |
+| **Zod**               | Runtime schema validation for all payloads         |
+| **Axios**             | HTTP client for Groq API calls                     |
+| **Groq**              | LLM provider — fast inference for filtering + chat |
 
-Create new entry points in `src/entrypoints/` following WXT conventions:
+---
 
-- Background scripts: `background/`
-- Content scripts: `content/`
-- Popup/Options pages: `popup/`, `options/`
+## Technical Highlights
 
-## Browser Support
+### tRPC Over Chrome Runtime
 
-- Chrome 88+
-- Firefox 109+
-- Safari 14+
-- Edge 88+
+Content scripts never call the LLM directly. All AI procedures go through the background tRPC router via a long-lived Chrome port:
 
-## Contributing
+```ts
+// content script — trpcClient.ts
+const port = chrome.runtime.connect();
+const client = createTRPCProxyClient<AppRouter>({
+	transformer: superjson,
+	links: [chromeLink({ port })],
+});
 
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Run type checking: `pnpm compile`
-5. Test in both Chrome and Firefox
-6. Submit a pull request
+// background — index.ts
+createChromeHandler({
+	router: appRouter,
+	transformer: superjson,
+	createContext: async () => ({}),
+});
+```
+
+### Shadow-Root UI Injection
+
+Overlays are scoped in shadow DOM to prevent style bleed with Reddit's CSS:
+
+```ts
+createShadowRootUi(ctx, {
+	name: "post-insight-overlay",
+	position: "inline",
+	onMount: (uiContainer, _shadow, shadowContainer) => {
+		// React renders into the shadow root — fully isolated
+	},
+});
+```
+
+### AI Filtering via Index Mapping
+
+The model returns a lightweight JSON array of indices, which are mapped back to the already-extracted DOM data — no re-scraping needed:
+
+```ts
+// Model returns: [0, 3, 7, 12]
+// Mapped back to original posts array → filtered subset
+const filtered = indices.map((i) => posts[i]);
+```
+
+---
+
+## Roadmap
+
+- [ ] Comment chat UI (`chatAboutComments` + LLMInterface variant)
+- [ ] Better Markdown rendering for chat responses (replace plain `<p>`)
+- [ ] Settings page for user-provided Groq API key via `chrome.storage`
+- [ ] Improved DOM extraction robustness across Reddit layout variants
+- [ ] Rate limiting + request cancellation for in-flight AI queries
+- [ ] Per-page caching of AI filter results
+- [ ] Streamed AI responses for lower perceived latency
+
+---
+
+## Security Notes
+
+- **Never hardcode API keys** — use `.env` for local dev and `chrome.storage` for production
+- **Content scripts are untrusted** — all LLM calls are gated through the background script
+- **DOM data is untrusted** — Zod schemas validate all scraped payloads before they reach tRPC procedures
+- **Shadow DOM scoping** — overlay styles are fully isolated; no CSS leaks into or out of Reddit's page
+
+---
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+MIT — see `LICENSE`.
 
-## Resources
+---
 
-- [WXT Documentation](https://wxt.dev/)
-- [React Documentation](https://react.dev/)
-- [Tailwind CSS](https://tailwindcss.com/)
-- [shadcn/ui](https://ui.shadcn.com/)
-- [Web Extensions API](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions)
+<p align="center">
+  <strong>Built with 🤍 by Suho Kim</strong>
+</p>
