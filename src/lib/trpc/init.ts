@@ -11,3 +11,4 @@ const t = initTRPC.create({
 
 export const router = t.router
 export const publicProcedures = t.procedure
+export const AIProcedures = t.procedure
