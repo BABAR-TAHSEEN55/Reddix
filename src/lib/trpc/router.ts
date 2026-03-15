@@ -7,11 +7,8 @@ const llm = new LLMService()
 export const appRouter = router({
 	health: publicProcedures.query(() => "hello"),
 	post: publicProcedures.query(() => "Post Handler called"),
-	// insights: publicProcedures.query(() => {
-	// 	return "HOla"
-	// })
-	analyzePosts: AIProcedures.input(z.object({ posts: z.array(RedditPostSchema), query: z.string().optional() })).mutation(({ input }) => {
-		llm.analyzePosts(input.posts, input.query)
+	analyzePosts: AIProcedures.input(z.object({ posts: z.array(RedditPostSchema), query: z.string() })).mutation(({ input }) => {
+		return llm.smartFilterPosts(input.posts, input.query)
 	})
 })
 

@@ -1,15 +1,12 @@
 // Content should use custom css and not shadcn
 import "../initial.css";
 
-import { createTRPCProxyClient } from "@trpc/client";
-import { chromeLink } from "trpc-chrome/link";
-
-import type { AppRouter } from "@/lib/trpc/router";
 
 import Posts from "./posts/Posts";
 import { CreateContentUI } from "./common";
 import { extractRedditPosts } from "../scripts/scrape";
-import SuperJSON from "superjson";
+
+import { trpc } from "@/lib/trpc/trpcClient";
 
 type InsightType = "posts" | "comments";
 
@@ -24,19 +21,12 @@ export default defineContentScript({
 	cssInjectionMode: "ui",
 
 	async main(ctx) {
-		// Open long-lived port to background
-		const port = chrome.runtime.connect({ name: "trpc" });
-
-		// tRPC client
-		const client = createTRPCProxyClient<AppRouter>({
-			links: [chromeLink({ port })], transformer: SuperJSON
-		});
 
 		const listener = async (request: PayloadResponse) => {
 			switch (request.type) {
 				case "POST_INSIGHTS_CLICKED": {
 					try {
-						const health = await client.health.query();
+						const health = await trpc.health.query();
 						console.log("[tRPC] health:", health);
 					} catch (err) {
 						console.error("[tRPC] health failed:", err);

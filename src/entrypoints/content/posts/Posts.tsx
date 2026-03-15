@@ -2,8 +2,10 @@
 import { Button } from "@/components/ui/button";
 import { RedditPostData } from "@/entrypoints/scripts/scrape";
 import { useEffect, useState } from "react";
+
 import {
 	MessageCircle,
+
 	ArrowBigUp,
 	X,
 	ExternalLink,
@@ -18,6 +20,7 @@ import {
 	Filter,
 } from "lucide-react";
 import LLMInterface from "../common/LLMInterface";
+import { trpc } from "@/lib/trpc/trpcClient";
 
 interface PostProps {
 	onRemove: () => void;
@@ -98,16 +101,15 @@ const Posts = ({ onRemove, posts }: PostProps) => {
 
 		setIsAnalyzing(true);
 		try {
-			// const filteredPosts = await LLMServiceProvider.smartFilterPosts(
-			// 	posts,
-			// 	aiQuery,
-			// );
-			// setAIFilteredPosts(filteredPosts);
+			const filteredPosts = await trpc.analyzePosts.mutate({
+				posts,
+				query: aiQuery,
+			});
+			setAIFilteredPosts(filteredPosts ?? []);
 			setIsAIActive(true);
-			setShowAISearch(false); // Hide the search panel after search
+			setShowAISearch(false);
 		} catch (error) {
 			console.error("AI Search failed:", error);
-			// Fallback to empty results
 			setAIFilteredPosts([]);
 			setIsAIActive(true);
 		} finally {
