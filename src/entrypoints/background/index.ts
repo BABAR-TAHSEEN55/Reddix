@@ -42,11 +42,18 @@ export default defineBackground({
 		});
 
 		chrome.contextMenus.onClicked.addListener(async (info) => {
-			if (info.menuItemId !== "post") return;
 			const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
 			if (!tab?.id) return;
-			await chrome.tabs.sendMessage(tab.id, { type: "POST_INSIGHTS_CLICKED" });
 
+			if (info.menuItemId === "post") {
+				await chrome.tabs.sendMessage(tab.id, { type: "POST_INSIGHTS_CLICKED" });
+				return;
+			}
+
+			if (info.menuItemId === "Comments") {
+				await chrome.tabs.sendMessage(tab.id, { type: "COMMENT_INSIGHTS_CLICKED" });
+				return;
+			}
 		});
 	},
 });
