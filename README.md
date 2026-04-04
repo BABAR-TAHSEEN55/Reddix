@@ -50,22 +50,21 @@
 ## Preview Gallery
 
 <p align="center">
-  <img src="./public/Preview/Reddix-1.png" alt="Reddix preview 1" width="900" />
-</p>
-<p align="center">
-  <img src="./public/Preview/Reddix-2.png" alt="Reddix preview 2" width="900" />
-</p>
-<p align="center">
-  <img src="./public/Preview/Reddix-3.png" alt="Reddix preview 3" width="900" />
+  <img src="./public/Preview/Reddix-1.png" alt="Reddix preview 1" width="445" />
+  <img src="./public/Preview/Reddix-2.png" alt="Reddix preview 2" width="445" />
 </p>
 
 <p align="center">
+  <img src="./public/Preview/Reddix-3.png" alt="Reddix preview 3" width="445" />
   <img src="./public/Preview/Reddix-4-dark.png" alt="Reddix AI panel dark mode" width="445" />
-  <img src="./public/Preview/Reddix-4-light.png" alt="Reddix AI panel light mode" width="445" />
 </p>
 
 <p align="center">
+  <img src="./public/Preview/Reddix-4-light.png" alt="Reddix AI panel light mode" width="445" />
   <img src="./public/Preview/Reddix-5-dark.png" alt="Reddix credentials dark mode" width="445" />
+</p>
+
+<p align="center">
   <img src="./public/Preview/Reddix-5-light.png" alt="Reddix credentials light mode" width="445" />
 </p>
 
