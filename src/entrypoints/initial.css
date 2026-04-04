@@ -1,1 +1,79 @@
-@import "tailwindcss";
+@import 'tailwindcss';
+
+/* Global themed scrollbar defaults for extension overlays */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #b8956a #faf6f1;
+}
+
+/* WebKit scrollbar (Chrome/Edge/Brave) */
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+*::-webkit-scrollbar-track {
+  background: #faf6f1;
+  border-radius: 9999px;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #d4a373 0%, #b8956a 100%);
+  border-radius: 9999px;
+  border: 2px solid #faf6f1;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #e6b885 0%, #c9a87c 100%);
+}
+
+/* Explicit helper classes for light/dark containers */
+.scrollbar-light {
+  scrollbar-width: thin;
+  scrollbar-color: #b8956a #faf6f1;
+}
+
+.scrollbar-light::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+.scrollbar-light::-webkit-scrollbar-track {
+  background: #faf6f1;
+  border-radius: 9999px;
+}
+
+.scrollbar-light::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #d4a373 0%, #b8956a 100%);
+  border-radius: 9999px;
+  border: 2px solid #faf6f1;
+}
+
+.scrollbar-light::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #e6b885 0%, #c9a87c 100%);
+}
+
+.scrollbar-dark {
+  scrollbar-width: thin;
+  scrollbar-color: #9aaa8e #242422;
+}
+
+.scrollbar-dark::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+.scrollbar-dark::-webkit-scrollbar-track {
+  background: #242422;
+  border-radius: 9999px;
+}
+
+.scrollbar-dark::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #7a8471 0%, #9aaa8e 100%);
+  border-radius: 9999px;
+  border: 2px solid #242422;
+}
+
+.scrollbar-dark::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #9aaa8e 0%, #b7c4ab 100%);
+}
