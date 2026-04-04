@@ -14,6 +14,14 @@ export default defineConfig({
 			description: "A reddit extension that solved the nightmare of subreddtis",
 			version: "1.0.0",
 
+			browser_specific_settings: {
+				gecko: {
+					data_collection_permissions: {
+						required: false,
+					},
+				},
+			},
+
 			icons: {
 				16: "reddix-16.png",
 				32: "reddix-32.png",
@@ -30,4 +38,5 @@ export default defineConfig({
 			],
 		};
 	},
+
 });
