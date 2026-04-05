@@ -16,7 +16,7 @@
 ## Table of Contents
 
 - [Overview](#overview)
-- [Preview Gallery](#preview-gallery)
+- [Showcase](#showcase)
 - [System Architecture](#system-architecture)
 - [Key Features](#key-features)
 - [Pipeline Flow](#pipeline-flow)
@@ -46,9 +46,18 @@
 - **Local Search**: Instant client-side search with no round-trips
 
 ---
-## ShowCase
 
-[Reddix](https://github.com/user-attachments/assets/67da9c2d-d520-49ee-a6f4-1f264764a00f)
+## Showcase
+
+<p align="center">
+  <a href="https://github.com/user-attachments/assets/67da9c2d-d520-49ee-a6f4-1f264764a00f">
+    <img src="./src/assets/showcase/reddix-showcase.png" alt="Reddix showcase preview" width="900" />
+  </a>
+</p>
+
+<p align="center">
+  Full walkthrough preview of Reddix in action
+</p>
 
 ---
 
